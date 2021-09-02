@@ -1,8 +1,11 @@
 var http = require('http')
 var fs = require('fs')
 var path = require('path')
+const connection = require("./models");
 const APP_PORT = process.env.APP_PORT || 3000
 const app = http.createServer(requestHandler)
+const mongoose=require("mongoose");
+const ChatModel = mongoose.model("chat");
 
 app.listen(APP_PORT)
 console.log(`🖥 HTTP Server running at ${APP_PORT}`)
@@ -79,7 +82,21 @@ io.on('connection', (socket) => {
   })
 
   socket.on('new-message', (data) => {
-    console.log(`👾 new-message from ${data.user}`)
+    console.log(`👾 new-message from ${users[socket.id]}`);
+    
+    var chat = new ChatModel();
+    chat.sender = users[socket.id];
+    chat.message = data.message;
+    chat.ctime = new Date();
+
+    chat.save((err, doc)=>{
+      if(!err){
+          console.log("data saved successfully");
+      }else {
+          console.log("Error Occured");
+      }
+    });
+    
     socket.broadcast.emit('broadcast-message', {
       user: users[data.user],
       message: data.message,
